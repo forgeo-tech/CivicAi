@@ -1,7 +1,7 @@
-# CivicAI
+# FixitAI
 
 ## 1. Project Overview
-CivicAI is an AI-powered public infrastructure monitoring and emergency route intelligence system built as a 4-hour hackathon MVP.
+FixitAI is an AI-powered public infrastructure monitoring and emergency route intelligence system built as a 4-hour hackathon MVP.
 
 The application allows users to upload images of infrastructure issues (like potholes or broken streetlights). An AI service analyzes these images. **Users select the infrastructure location directly on an interactive map, and the system automatically captures latitude/longitude and resolves a human-readable address.** Municipal workers can view an admin dashboard to generate actionable Work Orders. Additionally, an Emergency Route feature allows users to check routes between two map-selected locations for high-risk hazards.
 
@@ -30,7 +30,7 @@ The application allows users to upload images of infrastructure issues (like pot
 
 ## 5. Project Structure
 ```text
-CivicAI/
+FixitAI/
 ├── backend/
 │   ├── app/
 │   │   ├── api/            # API Routers (incidents, routes, work_orders)

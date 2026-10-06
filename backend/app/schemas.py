@@ -34,7 +34,7 @@ class IncidentResponse(BaseModel):
     issue_type: str
     confidence: float
     severity: str
-    status: str
+    status: Optional[str] = None
     priority_score: float
     priority_reasons: str
     lat: Optional[float]

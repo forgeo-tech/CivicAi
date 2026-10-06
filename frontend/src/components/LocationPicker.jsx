@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { readResponse } from '../api'
 
 // Fix default marker
 delete L.Icon.Default.prototype._getIconUrl
@@ -14,20 +15,27 @@ export default function LocationPicker({ onLocationSelect, initialLat, initialLo
   const mapRef = useRef(null)
   const mapInstance = useRef(null)
   const marker = useRef(null)
-  const [address, setAddress] = useState('Click map to select location')
+  const placeMarkerRef = useRef(null)
+  const initialCenter = useRef([initialLat ?? 12.97, initialLon ?? 77.59])
+  const [address, setAddress] = useState('Click the map to select a location')
+  const [locationError, setLocationError] = useState('')
+
+  useEffect(() => { placeMarkerRef.current = placeMarker })
 
   useEffect(() => {
     if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([12.97, 77.59], 12)
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current)
+      mapInstance.current = L.map(mapRef.current).setView(initialCenter.current, 12)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(mapInstance.current)
 
       mapInstance.current.on('click', (e) => {
-        placeMarker(e.latlng)
+        placeMarkerRef.current(e.latlng)
       })
     }
+    return () => { mapInstance.current?.remove(); mapInstance.current = null }
   }, [])
 
-  const placeMarker = async (latlng) => {
+  async function placeMarker(latlng) {
+    setLocationError('')
     if (marker.current) mapInstance.current.removeLayer(marker.current)
     marker.current = L.marker(latlng).addTo(mapInstance.current)
     onLocationSelect(latlng.lat, latlng.lng, 'Selected map location')
@@ -35,34 +43,36 @@ export default function LocationPicker({ onLocationSelect, initialLat, initialLo
     // Reverse Geocode
     try {
       const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'CivicAI-Hackathon' }
+        headers: { 'Accept': 'application/json' }
       })
-      const data = await resp.json()
+      const data = await readResponse(resp)
       if (data.display_name) {
         setAddress(data.display_name)
         onLocationSelect(latlng.lat, latlng.lng, data.display_name)
       }
-    } catch (e) {
+    } catch {
       setAddress('Selected map location (name unavailable)')
     }
   }
 
   const useCurrentLocation = () => {
-    if (!navigator.geolocation) return alert('Geolocation not supported')
+    if (!navigator.geolocation) return setLocationError('Location access is not available in this browser.')
     navigator.geolocation.getCurrentPosition((pos) => {
       const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude }
       mapInstance.current.flyTo(latlng, 15)
       placeMarker(latlng)
-    }, () => alert('Location permission denied'))
+    }, () => setLocationError('Location permission was denied. You can still choose a point on the map.'))
   }
 
   return (
-    <div>
-      <div style={{ marginBottom: 10, display: 'flex', gap: 10 }}>
-        <button type="button" className="btn btn-sm" onClick={useCurrentLocation}>Use current location</button>
-        <strong>Selected: {address}</strong>
+    <div className="map-location">
+      <div className="map-toolbar">
+        <div className="map-address"><strong>{address.startsWith('Click') ? 'No location selected' : 'Selected location'}</strong>{!address.startsWith('Click') && ` · ${address}`}</div>
+        <button type="button" className="map-current" onClick={useCurrentLocation}>⌖ Use my location</button>
       </div>
-      <div ref={mapRef} style={{ height: 300, borderRadius: 'var(--radius)', border: '1px solid var(--border)' }} />
+      <div ref={mapRef} className="map-canvas" role="application" aria-label="Select incident location on map" />
+      <p className="map-hint">Click anywhere on the map to place or move the incident pin.</p>
+      {locationError && <p className="location-error" role="status">{locationError}</p>}
     </div>
   )
 }

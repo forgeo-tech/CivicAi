@@ -1,4 +1,4 @@
-"""CivicAI backend configuration. Loads settings from environment variables with safe defaults."""
+"""FixitAI backend configuration. Loads settings from environment variables with safe defaults."""
 
 from pathlib import Path
 from dotenv import load_dotenv

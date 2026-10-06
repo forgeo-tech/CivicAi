@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db
 from app.api import incidents, work_orders, routes as routes_api
 
-app = FastAPI(title="CivicAI", version="0.1.0")
+app = FastAPI(title="FixitAI", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
