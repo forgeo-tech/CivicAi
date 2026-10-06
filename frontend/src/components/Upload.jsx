@@ -1,9 +1,9 @@
 import { useState } from 'react'
+import LocationPicker from './LocationPicker'
 
 export default function Upload() {
   const [file, setFile] = useState(null)
-  const [lat, setLat] = useState('')
-  const [lon, setLon] = useState('')
+  const [location, setLocation] = useState({ lat: null, lon: null, name: null })
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -17,8 +17,9 @@ export default function Upload() {
 
     const formData = new FormData()
     formData.append('image', file)
-    if (lat) formData.append('lat', lat)
-    if (lon) formData.append('lon', lon)
+    if (location.lat) formData.append('lat', location.lat)
+    if (location.lon) formData.append('lon', location.lon)
+    if (location.name) formData.append('location_name', location.name)
 
     try {
       const res = await fetch('/api/incidents/upload', { method: 'POST', body: formData })
@@ -44,18 +45,12 @@ export default function Upload() {
           <strong>Image</strong>
           <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files[0])} style={{ display: 'block', marginTop: 4 }} />
         </label>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <label style={{ flex: 1 }}>
-            Latitude
-            <input type="number" step="any" value={lat} onChange={(e) => setLat(e.target.value)} placeholder="e.g. 12.9716" style={{ width: '100%' }} />
-          </label>
-          <label style={{ flex: 1 }}>
-            Longitude
-            <input type="number" step="any" value={lon} onChange={(e) => setLon(e.target.value)} placeholder="e.g. 77.5946" style={{ width: '100%' }} />
-          </label>
-        </div>
-        <button className="btn btn-primary" type="submit" disabled={!file || loading}>
-          {loading ? 'Analyzing…' : 'Upload & Analyze'}
+
+        <label><strong>Location</strong> (Click to report)</label>
+        <LocationPicker onLocationSelect={(lat, lon, name) => setLocation({ lat, lon, name })}/>
+
+        <button className="btn btn-primary" type="submit" disabled={!file || !location.lat || loading}>
+          {loading ? 'Analyzing…' : 'Upload & Submit'}
         </button>
       </form>
 

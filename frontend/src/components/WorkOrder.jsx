@@ -1,8 +1,28 @@
 import { useState } from 'react'
 
-export default function WorkOrder({ incident, onBack }) {
+export default function WorkOrder({ incident: initialIncident, onBack }) {
+  const [incident, setIncident] = useState(initialIncident)
   const [wo, setWo] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [updating, setUpdating] = useState(false)
+
+  const updateStatus = async (newStatus) => {
+    setUpdating(true)
+    try {
+      const res = await fetch(`/api/incidents/${incident.id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (!res.ok) throw new Error('Status update failed')
+      const data = await res.json()
+      setIncident(data)
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setUpdating(false)
+    }
+  }
 
   const generate = async () => {
     setLoading(true)
@@ -27,6 +47,22 @@ export default function WorkOrder({ incident, onBack }) {
         <h3>Incident Details</h3>
         <table>
           <tbody>
+            <tr>
+              <td><strong>Status</strong></td>
+              <td>
+                <select
+                  value={incident.status}
+                  onChange={(e) => updateStatus(e.target.value)}
+                  disabled={updating}
+                  style={{ padding: '4px', borderRadius: '4px' }}
+                >
+                  <option value="reported">Reported</option>
+                  <option value="verified">Verified</option>
+                  <option value="ignored">Ignored</option>
+                  <option value="fixed">Fixed</option>
+                </select>
+              </td>
+            </tr>
             <tr><td><strong>Issue</strong></td><td>{incident.issue_type}</td></tr>
             <tr><td><strong>Severity</strong></td><td><span className={`badge ${incident.severity}`}>{incident.severity}</span></td></tr>
             <tr><td><strong>Priority</strong></td><td>{incident.priority_score}/100</td></tr>

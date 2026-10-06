@@ -17,8 +17,10 @@ class Incident(Base):
     severity = Column(String, default="medium")
     priority_score = Column(Float, default=0.0)
     priority_reasons = Column(Text, default="")
+    status = Column(String, default="reported")  # reported, verified, fixed, ignored
     lat = Column(Float, nullable=True)
     lon = Column(Float, nullable=True)
+    location_name = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     work_orders = relationship("WorkOrder", back_populates="incident", cascade="all, delete-orphan")

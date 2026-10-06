@@ -1,0 +1,25 @@
+# Environment
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Database and Storage
+backend/data/
+backend/uploads/
+*.sqlite
+*.db
+
+# Node/Vite
+node_modules/
+dist/
+.npm/
+
+# IDE/System
+.vscode/
+.idea/
+.DS_Store

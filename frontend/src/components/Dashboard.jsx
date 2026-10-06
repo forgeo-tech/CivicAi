@@ -28,6 +28,7 @@ export default function Dashboard({ onSelectIncident }) {
           <thead>
             <tr>
               <th>ID</th>
+              <th>Status</th>
               <th>Issue</th>
               <th>Severity</th>
               <th>Priority</th>
@@ -40,6 +41,7 @@ export default function Dashboard({ onSelectIncident }) {
             {incidents.map((inc) => (
               <tr key={inc.id}>
                 <td>#{inc.id}</td>
+                <td><span className={`badge ${inc.status === 'verified' ? 'low' : inc.status === 'reported' ? 'medium' : 'none'}`}>{inc.status}</span></td>
                 <td>{inc.issue_type}</td>
                 <td><span className={`badge ${inc.severity}`}>{inc.severity}</span></td>
                 <td>

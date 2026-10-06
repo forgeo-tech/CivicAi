@@ -25,6 +25,13 @@ app.include_router(work_orders.router)
 app.include_router(routes_api.router)
 
 
-@app.get("/health")
+from app.services import get_inference_service
+
+@app.get("/api/health")
 def health():
-    return {"status": "ok"}
+    service = get_inference_service()
+    return {
+        "status": "ok",
+        "cuda_available": service.is_cuda_available(),
+        "is_real_ai": service.is_real_model()
+    }

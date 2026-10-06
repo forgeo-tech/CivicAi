@@ -7,8 +7,9 @@ from datetime import datetime
 
 from app.database import get_db
 from app.models import Incident, WorkOrder
-from app.schemas import AnalyzeRequest, AnalyzeResponse, IncidentResponse
+from app.schemas import AnalyzeRequest, AnalyzeResponse, IncidentResponse, IncidentStatusUpdate
 from app.services import get_inference_service
+from app.services.priority import calculate_priority
 
 router = APIRouter(prefix="/api/incidents", tags=["incidents"])
 
@@ -20,6 +21,7 @@ async def upload_and_analyze(
     image: UploadFile = File(...),
     lat: float | None = None,
     lon: float | None = None,
+    location_name: str | None = None,
     db: Session = Depends(get_db),
 ):
     """Upload an image, run AI analysis, store the incident, and return results."""
@@ -37,20 +39,28 @@ async def upload_and_analyze(
         raise HTTPException(status_code=500, detail="No issues detected")
 
     r = results[0]
+    priority_score, priority_reasons = calculate_priority(r.issue_type, r.severity, r.confidence, lat, lon)
+
     incident = Incident(
         image_path=str(file_path),
         issue_type=r.issue_type,
         confidence=r.confidence,
         severity=r.severity,
-        priority_score=r.priority_score,
-        priority_reasons="; ".join(r.priority_reasons),
+        priority_score=priority_score,
+        priority_reasons="; ".join(priority_reasons),
         lat=lat,
         lon=lon,
+        location_name=location_name
     )
     db.add(incident)
     db.commit()
     db.refresh(incident)
-    return AnalyzeResponse(incident_id=incident.id, results=r.__dict__)
+
+    # Bundle result for old schema response locally
+    out_results = r.__dict__.copy()
+    out_results["priority_score"] = priority_score
+    out_results["priority_reasons"] = priority_reasons
+    return AnalyzeResponse(incident_id=incident.id, results=out_results)
 
 
 @router.get("/", response_model=list[IncidentResponse])
@@ -63,4 +73,14 @@ def get_incident(incident_id: int, db: Session = Depends(get_db)):
     inc = db.query(Incident).get(incident_id)
     if not inc:
         raise HTTPException(status_code=404, detail="Incident not found")
+    return inc
+
+@router.put("/{incident_id}/status", response_model=IncidentResponse)
+def update_incident_status(incident_id: int, update: IncidentStatusUpdate, db: Session = Depends(get_db)):
+    inc = db.query(Incident).get(incident_id)
+    if not inc:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    inc.status = update.status
+    db.commit()
+    db.refresh(inc)
     return inc

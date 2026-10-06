@@ -24,16 +24,22 @@ class AnalyzeResponse(BaseModel):
     results: IssueResult
 
 
+class IncidentStatusUpdate(BaseModel):
+    status: str
+
+
 class IncidentResponse(BaseModel):
     id: int
     image_path: str
     issue_type: str
     confidence: float
     severity: str
+    status: str
     priority_score: float
     priority_reasons: str
     lat: Optional[float]
     lon: Optional[float]
+    location_name: Optional[str] = None
     created_at: datetime
 
     class Config:
